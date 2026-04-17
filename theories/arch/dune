@@ -1,0 +1,54 @@
+(copy_files
+ (files %{project_root}/archs/riscV/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} riscV)))
+
+(copy_files
+ (files %{project_root}/archs/arm/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} arm)))
+
+(copy_files
+ (files %{project_root}/archs/aarch64/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} aarch64)))
+
+(copy_files
+ (files %{project_root}/archs/powerpc/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} ppc)))
+
+(copy_files
+ (files %{project_root}/archs/x86/*)
+ (enabled_if
+  (or
+   (= %{env:TARGET_PLATFORM=ppc} x86_32)
+   (= %{env:TARGET_PLATFORM=ppc} x86_64))))
+
+(copy_files
+ (files %{project_root}/archs/x86_64/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} x86_64)))
+
+(copy_files
+ (files %{project_root}/archs/x86_32/*)
+ (enabled_if
+  (= %{env:TARGET_PLATFORM=ppc} x86_32)))
+
+(rule
+ (action
+  (with-stdout-to
+   SelectOp.v
+   (run ndfun %{dep:SelectOp.vp}))))
+
+(rule
+ (action
+  (with-stdout-to
+   SelectLong.v
+   (run ndfun %{dep:SelectLong.vp}))))
+
+(rule
+ (action
+  (with-stdout-to
+   ConstpropOp.v
+   (run ndfun %{dep:ConstpropOp.vp}))))

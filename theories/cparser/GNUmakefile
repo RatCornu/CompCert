@@ -52,7 +52,7 @@
 
 # Make sure we use the same Menhir setup as the main CompCert Makefiles.
 
-include ../Makefile.menhir
+include ../../Makefile.menhir
 
 # Be more verbose about the automaton.
 

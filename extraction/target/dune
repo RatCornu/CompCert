@@ -1,0 +1,98 @@
+(executable
+ (name Driver)
+ (public_name ccomp)
+ (package compcert)
+ (modes byte exe)
+ (modules Driver)
+ (libraries compcert))
+
+(library
+ (name compcert)
+ (wrapped false)
+ (public_name compcert)
+ (libraries menhirLib str unix)
+ (modules :standard \ Driver GCC)
+ (modules_without_implementation c debugTypes dwarfTypes)
+ (flags :standard -w -56))
+
+(rule
+ (targets version.ml)
+ (package compcert)
+ (deps %{project_root}/VERSION)
+ (action
+  (with-stdout-to
+   %{targets}
+   (chdir
+    %{project_root}
+    (run %{bin:config_to_ml} %{deps})))))
+
+(ocamllex Lexer Readconfig Responsefile Tokenize)
+
+(rule
+ (deps pre_parser.mly pre_parser_messages.ml)
+ (targets pre_parser.ml pre_parser.mli)
+ (action
+  (run
+   menhir
+   --table
+   -v
+   --no-stdlib
+   -la
+   1
+   --explain
+   pre_parser.mly
+   --base
+   pre_parser)))
+
+(rule
+ (targets pre_parser_messages.ml)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run
+    menhir
+    --table
+    pre_parser.mly
+    -v
+    --no-stdlib
+    -la
+    1
+    -v
+    -la
+    2
+    --compile-errors
+    %{dep:handcrafted.messages}))))
+
+(copy_files %{project_root}/theories/arch/*.{ml,mli})
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/backend/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/cfrontend/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/common/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/cparser/*.{ml,mli,mll,mly,messages}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/debug/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/driver/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/export/*.{ml,mli}))
+
+(copy_files
+ (only_sources)
+ (files %{project_root}/theories/lib/*.{ml,mli,mll}))

@@ -1,0 +1,15 @@
+-arg -w
+-arg -deprecated-native-compiler-option
+-arg -w
+-arg -native-compiler-disabled
+-arg -native-compiler
+-arg ondemand
+-arg -boot
+-R /nix/store/vbiqsnlhpiil4cys61bxxdg6yajfgc77-rocq-9.1.1/lib/coq/theories Corelib
+-Q /nix/store/204smmbkvnak6ivs5mcx09d214r1wykf-rocq-core9.1-stdlib-9.0.0/lib/coq/9.1/user-contrib/Stdlib Stdlib
+-Q ../flocq Flocq
+-Q ../_build/default/flocq Flocq
+-Q ../MenhirLib MenhirLib
+-Q ../_build/default/MenhirLib MenhirLib
+-R . compcert.Common
+-R ../_build/default/common compcert.Common

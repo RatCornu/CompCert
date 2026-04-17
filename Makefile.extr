@@ -38,14 +38,15 @@ include Makefile.menhir
 
 # The pre-parser's error message database is compiled as follows.
 
-cparser/pre_parser_messages.ml:
-	$(MAKE) -C cparser correct
+theories/cparser/pre_parser_messages.ml:
+	$(MAKE) -C theories/cparser correct
 
 # Directories containing plain Caml code
 
-DIRS=extraction \
-  lib common $(ARCH) backend cfrontend cparser driver \
-  export debug
+DIRS=extraction/target \
+  theories/lib theories/common archs/$(ARCH) theories/backend \
+  theories/cfrontend theories/cparser theories/driver \
+  theories/export theories/debug
 
 INCLUDES=$(patsubst %,-I %, $(DIRS))
 
@@ -59,8 +60,8 @@ WARNINGS=-w +a \
   -w -missing-mli
 
 # For Menhir-generated code: add
-cparser/pre_parser.cmx: WARNINGS += -w -ambiguous-name
-cparser/pre_parser.cmo: WARNINGS += -w -ambiguous-name
+theories/cparser/pre_parser.cmx: WARNINGS += -w -ambiguous-name
+theories/cparser/pre_parser.cmo: WARNINGS += -w -ambiguous-name
 
 # For Coq-generated code: add
 EXTRWARNINGS=$(WARNINGS) \
@@ -103,21 +104,21 @@ OCAMLLEX=ocamllex -q
 MODORDER=tools/modorder .depend.extr
 COPY=cp
 
-PARSERS=cparser/pre_parser.mly
-LEXERS=cparser/Lexer.mll lib/Tokenize.mll \
-	     lib/Readconfig.mll lib/Responsefile.mll
+PARSERS=theories/cparser/pre_parser.mly
+LEXERS=theories/cparser/Lexer.mll theories/lib/Tokenize.mll \
+	     theories/lib/Readconfig.mll theories/lib/Responsefile.mll
 
 LIBS=str.cmxa unix.cmxa $(MENHIR_LIBS)
 LIBS_BYTE=$(patsubst %.cmxa,%.cma,$(patsubst %.cmx,%.cmo,$(LIBS)))
 
 EXECUTABLES=ccomp ccomp.byte cchecklink cchecklink.byte clightgen clightgen.byte
-GENERATED=$(PARSERS:.mly=.mli) $(PARSERS:.mly=.ml) $(LEXERS:.mll=.ml) cparser/pre_parser_messages.ml
+GENERATED=$(PARSERS:.mly=.mli) $(PARSERS:.mly=.ml) $(LEXERS:.mll=.ml) theories/cparser/pre_parser_messages.ml
 
 # Beginning of part that assumes .depend.extr already exists
 
 ifeq ($(wildcard .depend.extr),.depend.extr)
 
-CCOMP_OBJS:=$(shell $(MODORDER) driver/Driver.cmx)
+CCOMP_OBJS:=$(shell $(MODORDER) theories/driver/Driver.cmx)
 
 ifeq ($(OCAML_NATIVE_COMP),true)
 ccomp: $(CCOMP_OBJS)
@@ -133,7 +134,7 @@ ccomp.byte: $(CCOMP_OBJS:.cmx=.cmo)
 	@echo "Linking $@"
 	@$(OCAMLC) -o $@ $(LIBS_BYTE) $+
 
-CLIGHTGEN_OBJS:=$(shell $(MODORDER) export/ExportDriver.cmx)
+CLIGHTGEN_OBJS:=$(shell $(MODORDER) theories/export/ExportDriver.cmx)
 
 ifeq ($(OCAML_NATIVE_COMP),true)
 clightgen: $(CLIGHTGEN_OBJS)
@@ -155,13 +156,13 @@ endif
 
 # End of part that assumes .depend.extr already exists
 
-extraction/%.cmi: extraction/%.mli
+extraction/target/%.cmi: extraction/target/%.mli
 	@echo "OCAMLC   $<"
 	@$(OCAMLC) $(EXTRWARNINGS) -c $<
-extraction/%.cmo: extraction/%.ml
+extraction/target/%.cmo: extraction/target/%.ml
 	@echo "OCAMLC   $<"
 	@$(OCAMLC) $(EXTRWARNINGS) -c $<
-extraction/%.cmx: extraction/%.ml
+extraction/target/%.cmx: extraction/target/%.ml
 	@echo "OCAMLOPT $<"
 	@$(OCAMLOPT) $(EXTRWARNINGS) -c $<
 
@@ -182,7 +183,7 @@ clean:
 	rm -f $(EXECUTABLES)
 	rm -f $(GENERATED)
 	for d in $(DIRS); do rm -f $$d/*.cm[iotx] $$d/*cmti $$d/*.o; done
-	$(MAKE) -C cparser clean
+	$(MAKE) -C theories/cparser clean
 
 # Generation of .depend.extr
 

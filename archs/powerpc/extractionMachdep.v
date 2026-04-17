@@ -14,32 +14,30 @@
 (*                                                                     *)
 (* *********************************************************************)
 
-(* Additional extraction directives specific to the ARM port *)
+(* Additional extraction directives specific to the PowerPC port *)
+
+From compcert Require Archi Asm Asmgen SelectOp.
+
+(* Asm *)
+Extract Constant Asm.low_half => "fun _ _ _ -> assert false".
+Extract Constant Asm.high_half => "fun _ _ _ -> assert false".
+Extract Constant Asm.symbol_is_small_data => "C2C.atom_is_small_data".
+Extract Constant Asm.small_data_area_offset => "fun _ _ _ -> assert false".
+Extract Constant Asm.symbol_is_rel_data => "C2C.atom_is_rel_data".
+Extract Constant Asm.symbol_is_aligned => "C2C.atom_is_aligned".
 
 (* Suppression of stupidly big equality functions *)
 Extract Constant Asm.ireg_eq => "fun (x: ireg) (y: ireg) -> x = y".
 Extract Constant Asm.freg_eq => "fun (x: freg) (y: freg) -> x = y".
 Extract Constant Asm.preg_eq => "fun (x: preg) (y: preg) -> x = y".
 
-(* Choice of calling conventions *)
-Extract Constant Archi.abi =>
-  "begin match Configuration.abi with
-   | ""eabi"" -> Softfloat
-   | ""hardfloat"" -> Hardfloat
-   | _ -> assert false
-   end".
-
-(* Choice of endianness *)
-Extract Constant Archi.big_endian =>
-  "Configuration.is_big_endian".
-
-(* Whether the model is ARMv6T2 or above and hence supports Thumb2. *)
-Extract Constant Archi.thumb2_support =>
-  "(Configuration.model = ""armv6t2"" || Configuration.model >= ""armv7"")".
-
-(* Whether the model has hardware supports sdiv and udiv *)
-Extract Constant Archi.hardware_idiv =>
-  "fun () -> begin match  Configuration.model with
-   | ""armv7r"" | ""armv7m"" -> !Clflags.option_mthumb
+(* Choice of PPC splitlong *)
+Extract Constant Archi.ppc64 =>
+  "begin match Configuration.model with
+   | ""ppc64"" -> true
+   | ""e5500"" -> true
    | _ -> false
    end".
+
+(* Choice of passing of single *)
+Extract Constant Archi.single_passed_as_single => "Configuration.gnu_toolchain".

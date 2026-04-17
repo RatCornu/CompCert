@@ -22,19 +22,19 @@ BUILDNR ?= $(buildnr)
 TAG ?= $(tag)
 BRANCH ?= $(branch)
 
-ifeq ($(wildcard $(ARCH)_$(BITSIZE)),)
-ARCHDIRS=$(ARCH)
+ifeq ($(wildcard archs/$(ARCH)_$(BITSIZE)),)
+ARCHDIRS=archs/$(ARCH)
 else
-ARCHDIRS=$(ARCH)_$(BITSIZE) $(ARCH)
+ARCHDIRS=archs/$(ARCH)_$(BITSIZE) archs/$(ARCH)
 endif
 
-DIRS := lib common $(ARCHDIRS) backend cfrontend driver cparser
+DIRS := theories/lib theories/common $(ARCHDIRS) theories/backend theories/cfrontend theories/driver theories/cparser
 
 ifeq ($(CLIGHTGEN),true)
-DIRS += export debug extraction
+DIRS += theories/export theories/debug theories/extraction
 endif
 
-COQINCLUDES := $(foreach d, $(DIRS), -R $(d) compcert.$(d))
+COQINCLUDES := $(foreach d, $(DIRS), -R $(d) compcert.$(lastword $(subst /, ,d)))
 
 ifeq ($(LIBRARY_FLOCQ),local)
 DIRS += flocq/Core flocq/Prop flocq/Calc flocq/IEEE754
@@ -70,7 +70,7 @@ COQCOPTS ?= \
   -w -deprecated-since-8.20 \
   -w -deprecated-from-Coq
 
-cparser/Parser.vo: COQCOPTS += -w -deprecated-instance-without-locality
+theories/cparser/Parser.vo: COQCOPTS += -w -deprecated-instance-without-locality
 MenhirLib/Interpreter.vo: COQCOPTS += -w -undeclared-scope
 
 # Flocq and Menhirlib run into other renaming issues.
@@ -226,9 +226,9 @@ FILES=$(VLIB) $(COMMON) $(BACKEND) $(CFRONTEND) $(DRIVER) $(FLOCQ) \
 # Generated source files
 
 GENERATED=\
-  $(ARCH)/ConstpropOp.v $(ARCH)/SelectOp.v $(ARCH)/SelectLong.v \
-  backend/SelectDiv.v backend/SplitLong.v \
-  cparser/Parser.v
+  archs/$(ARCH)/ConstpropOp.v archs/$(ARCH)/SelectOp.v archs/$(ARCH)/SelectLong.v \
+  theories/backend/SelectDiv.v theories/backend/SplitLong.v \
+  theories/cparser/Parser.v
 
 all:
 	@test -f .depend || $(MAKE) depend
@@ -247,29 +247,29 @@ endif
 
 proof: $(FILES:.v=.vo)
 
-extraction: extraction/STAMP
+extraction: extraction/target/STAMP
 
-extraction/STAMP: $(FILES:.v=.vo) extraction/extraction.v $(ARCH)/extractionMachdep.v
-	rm -f extraction/*.ml extraction/*.mli
-	$(COQEXEC) extraction/extraction.v
-	@if grep 'AXIOM TO BE REALIZED' extraction/*.ml; then \
+extraction/target/STAMP: $(FILES:.v=.vo) extraction/target/extraction.v archs/$(ARCH)/extractionMachdep.v
+	rm -f extraction/target/*.ml extraction/target/*.mli
+	$(COQEXEC) extraction/target/extraction.v -output-directory extraction/target
+	@if grep 'AXIOM TO BE REALIZED' extraction/target/*.ml; then \
             echo "An error occured during extraction to OCaml code."; \
             echo "Check the versions of Flocq and MenhirLib used."; \
             exit 2; \
          fi
-	touch extraction/STAMP
+	touch extraction/target/STAMP
 
-.depend.extr: extraction/STAMP tools/modorder driver/Version.ml
+.depend.extr: extraction/target/STAMP tools/modorder theories/driver/Version.ml
 	$(MAKE) -f Makefile.extr depend
 
-ccomp: .depend.extr compcert.ini driver/Version.ml FORCE
+ccomp: .depend.extr compcert.ini theories/driver/Version.ml FORCE
 	$(MAKE) -f Makefile.extr ccomp
-ccomp.byte: .depend.extr compcert.ini driver/Version.ml FORCE
+ccomp.byte: .depend.extr compcert.ini theories/driver/Version.ml FORCE
 	$(MAKE) -f Makefile.extr ccomp.byte
 
-clightgen: .depend.extr compcert.ini driver/Version.ml FORCE
+clightgen: .depend.extr compcert.ini theories/driver/Version.ml FORCE
 	$(MAKE) -f Makefile.extr clightgen
-clightgen.byte: .depend.extr compcert.ini driver/Version.ml FORCE
+clightgen.byte: .depend.extr compcert.ini theories/driver/Version.ml FORCE
 	$(MAKE) -f Makefile.extr clightgen.byte
 
 runtime:
@@ -349,15 +349,15 @@ compcert.config: Makefile.config
         echo "COMPCERT_BRANCH=$(BRANCH)" \
         ) > compcert.config
 
-driver/Version.ml: VERSION
+theories/driver/Version.ml: VERSION
 	(echo 'let version = "$(BUILDVERSION)"'; \
          echo 'let buildnr = "$(BUILDNR)"'; \
          echo 'let tag = "$(TAG)"'; \
-         echo 'let branch = "$(BRANCH)"') > driver/Version.ml
+         echo 'let branch = "$(BRANCH)"') > $@
 
-cparser/Parser.v: cparser/Parser.vy
+theories/cparser/Parser.v: theories/cparser/Parser.vy
 	@rm -f $@
-	$(MENHIR) --coq --coq-no-version-check cparser/Parser.vy
+	$(MENHIR) --coq --coq-no-version-check $<
 	@chmod a-w $@
 
 depend: $(GENERATED) depend1
@@ -401,9 +401,9 @@ clean:
 	rm -rf $(patsubst %, %/.coq-native, $(DIRS))
 	rm -f $(patsubst %, %/*.glob, $(DIRS))
 	rm -rf doc/html
-	rm -f driver/Version.ml
+	rm -f theories/driver/Version.ml
 	rm -f compcert.ini compcert.config
-	rm -f extraction/STAMP extraction/*.ml extraction/*.mli .depend.extr
+	rm -f extraction/target/STAMP extraction/target/*.ml extraction/target/*.mli .depend.extr
 	rm -f tools/ndfun tools/modorder tools/*.cm? tools/*.o
 	rm -f $(GENERATED) .depend
 	rm -f .lia.cache

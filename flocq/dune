@@ -1,0 +1,8 @@
+(rocq.theory
+ (name Flocq)
+ (package Flocq)
+ (stdlib yes)
+ (theories Stdlib)
+ (generate_project_file))
+
+(include_subdirs qualified)

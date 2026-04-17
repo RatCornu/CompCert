@@ -840,27 +840,12 @@ fi
 # Generate Merlin and CoqProject files to simplify development
 #
 cat > .merlin <<EOF
-S lib
-S common
-S $arch
-S backend
-S cfrontend
-S driver
-S debug
-S export
-S cparser
-S extraction
+S archs/$arch
+S theories/*
 
-B lib
-B common
-B $arch
-B backend
-B cfrontend
-B driver
-B debug
-B export
-B cparser
-B extraction
+B archs/$arch
+B theories/*
+B _build/install/default/lib/compcert
 EOF
 
 $make CoqProject

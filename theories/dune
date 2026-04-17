@@ -1,0 +1,9 @@
+(rocq.theory
+ (name compcert)
+ (package compcert)
+ (stdlib yes)
+ (theories Stdlib Flocq MenhirLib)
+ (generate_project_file)
+ (modules :standard \ common.Subtyping))
+
+(include_subdirs qualified)
